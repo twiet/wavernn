@@ -33,10 +33,6 @@ def get_wav_mel(path):
     else:
         raise ValueError("hp.input_type {} not recognized".format(hp.input_type))
 
-
-
-
-
 def process_data(wav_dir, output_path, mel_path, wav_path):
     """
     given wav directory and output directory, process wav files and save quantized wav and mel
@@ -95,8 +91,6 @@ if __name__=="__main__":
 
     # process data
     process_data(wav_dir, output_path, mel_path, wav_path)
-
-
 
 def test_get_wav_mel():
     wav, mel = get_wav_mel('sample.wav')
