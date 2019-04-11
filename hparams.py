@@ -1,5 +1,7 @@
 class hparams:
 
+    dataset = "./LJSpeech/test/"
+    test_split = 2
     # option parameters
 
     # Input type:

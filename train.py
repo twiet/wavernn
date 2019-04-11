@@ -137,8 +137,6 @@ def train_loop(device, model, data_loader, optimizer, checkpoint_dir):
     else:
         raise ValueError("input_type:{} not supported".format(hp.input_type))
 
-    
-
     global global_step, global_epoch, global_test_step
     while global_epoch < hp.nepochs:
         running_loss = 0

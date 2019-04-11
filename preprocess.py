@@ -1,7 +1,7 @@
 """
 Preprocess dataset
 
-usage: preproess.py [options] <wav-dir>
+usage: preproess.py [options]
 
 options:
      --output-dir=<dir>      Directory where processed outputs are saved. [default: data_dir].
@@ -15,12 +15,22 @@ from audio import *
 from hparams import hparams as hp
 from utils import *
 from tqdm import tqdm
+import matplotlib.pyplot as plt
+import librosa.display
+
+def save_spectrogram(save_path, mel):
+    plt.figure(figsize=(10, 4))
+    librosa.display.specshow(mel, y_axis='mel', fmax=8000, x_axis='time')
+    plt.colorbar(format='%+2.0f dB')
+    plt.title('Mel spectrogram')
+    plt.tight_layout()
+    plt.savefig(save_path)
 
 def get_wav_mel(path):
     """Given path to .wav file, get the quantized wav and mel spectrogram as numpy vectors
 
     """
-    wav = load_wav(path)
+    wav, fs = load_wav(path)
     mel = melspectrogram(wav)
     if hp.input_type == 'raw':
         return wav.astype(np.float32), mel
@@ -40,19 +50,22 @@ def process_data(wav_dir, output_path, mel_path, wav_path):
     """
     dataset_ids = []
     # get list of wav files
-    wav_files = os.listdir(wav_dir)
+    wav_files = [file for file in os.listdir(wav_dir) if file[-4:] == '.wav']
     # check wav_file
     assert len(wav_files) != 0 or wav_files[0][-4:] == '.wav', "no wav files found!"
     # create training and testing splits
-    test_wav_files = wav_files[:4]
-    wav_files = wav_files[4:]
+    test_wav_files = wav_files[:hp.test_split]
+    wav_files = wav_files[hp.test_split:]
     for i, wav_file in enumerate(tqdm(wav_files)):
         # get the file id
-        file_id = '{:d}'.format(i).zfill(5)
-        wav, mel = get_wav_mel(os.path.join(wav_dir,wav_file))
+        file_id = wav_file[:-4]
+        wav, mel = get_wav_mel(os.path.join(wav_dir, wav_file))
+        save_spectrogram(os.path.join(mel_path, file_id + ".jpg"), mel)
+        # save_wav(wav, os.path.join(wav_path, file_id + ".wav"))
+
         # save
-        np.save(os.path.join(mel_path,file_id+".npy"), mel)
-        np.save(os.path.join(wav_path,file_id+".npy"), wav)
+        np.save(os.path.join(mel_path, file_id + ".npy"), mel)
+        np.save(os.path.join(wav_path, file_id + ".npy"), wav)
         # add to dataset_ids
         dataset_ids.append(file_id)
 
@@ -64,19 +77,19 @@ def process_data(wav_dir, output_path, mel_path, wav_path):
     test_path = os.path.join(output_path,'test')
     os.makedirs(test_path, exist_ok=True)
     for i, wav_file in enumerate(test_wav_files):
-        wav, mel = get_wav_mel(os.path.join(wav_dir,wav_file))
+        file_id = wav_file[:-4]
+        wav, mel = get_wav_mel(os.path.join(wav_dir, wav_file))
+        save_spectrogram(os.path.join(test_path, file_id + ".jpg"), mel)
+        # save_wav(wav, os.path.join(test_path, file_id + ".wav"))
         # save test_wavs
-        np.save(os.path.join(test_path,"test_{}_mel.npy".format(i)),mel)
-        np.save(os.path.join(test_path,"test_{}_wav.npy".format(i)),wav)
 
-    
+        np.save(os.path.join(test_path,"test_{}_mel.npy".format(file_id)), mel)
+        np.save(os.path.join(test_path,"test_{}_wav.npy".format(file_id)), wav)
     print("\npreprocessing done, total processed wav files:{}.\nProcessed files are located in:{}".format(len(wav_files), os.path.abspath(output_path)))
-
-
 
 if __name__=="__main__":
     args = docopt(__doc__)
-    wav_dir = args["<wav-dir>"]
+    wav_dir = hp.dataset
     output_dir = args["--output-dir"]
 
     # create paths

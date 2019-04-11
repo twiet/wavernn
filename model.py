@@ -9,6 +9,8 @@ from utils import num_params, mulaw_quantize, inv_mulaw_quantize
 from tqdm import tqdm
 import numpy as np
 
+use_cuda = torch.cuda.is_available()
+
 class ResBlock(nn.Module) :
     def __init__(self, dims) :
         super().__init__()
@@ -113,8 +115,13 @@ class Model(nn.Module) :
     
     def forward(self, x, mels) :
         bsize = x.size(0)
-        h1 = torch.zeros(1, bsize, self.rnn_dims).cuda()
-        h2 = torch.zeros(1, bsize, self.rnn_dims).cuda()
+        if use_cuda:
+            h1 = torch.zeros(1, bsize, self.rnn_dims).cuda()
+            h2 = torch.zeros(1, bsize, self.rnn_dims).cuda()
+        else:
+            h1 = torch.zeros(1, bsize, self.rnn_dims)
+            h2 = torch.zeros(1, bsize, self.rnn_dims)
+
         mels, aux = self.upsample(mels)
         
         aux_idx = [self.aux_dims * i for i in range(5)]
@@ -162,12 +169,20 @@ class Model(nn.Module) :
         rnn1 = self.get_gru_cell(self.rnn1)
         rnn2 = self.get_gru_cell(self.rnn2)
         
-        with torch.no_grad() :
-            x = torch.zeros(1, 1).cuda()
-            h1 = torch.zeros(1, self.rnn_dims).cuda()
-            h2 = torch.zeros(1, self.rnn_dims).cuda()
-            
-            mels = torch.FloatTensor(mels).cuda().unsqueeze(0)
+        with torch.no_grad():
+            if use_cuda:
+                x = torch.zeros(1, 1).cuda()
+                h1 = torch.zeros(1, self.rnn_dims).cuda()
+                h2 = torch.zeros(1, self.rnn_dims).cuda()
+                
+                mels = torch.FloatTensor(mels).cuda().unsqueeze(0)
+            else:
+                x = torch.zeros(1, 1)
+                h1 = torch.zeros(1, self.rnn_dims)
+                h2 = torch.zeros(1, self.rnn_dims)
+                
+                mels = torch.FloatTensor(mels).unsqueeze(0)
+
             mels, aux = self.upsample(mels)
             
             aux_idx = [self.aux_dims * i for i in range(5)]
@@ -217,7 +232,10 @@ class Model(nn.Module) :
                     distrib = torch.distributions.Categorical(posterior)
                     sample = inv_mulaw_quantize(distrib.sample(), hp.mulaw_quantize_channels, True)
                 output.append(sample.view(-1))
-                x = torch.FloatTensor([[sample]]).cuda()
+                if use_cuda:
+                    x = torch.FloatTensor([[sample]]).cuda()
+                else:
+                    x = torch.FloatTensor([[sample]])
         output = torch.stack(output).cpu().numpy()
         self.train()
         return output
@@ -233,12 +251,19 @@ class Model(nn.Module) :
         b_size = mels.shape[0]
         assert len(mels.shape) == 3, "mels should have shape [batch_size x 80 x mel_length]"
         
-        with torch.no_grad() :
-            x = torch.zeros(b_size, 1).cuda()
-            h1 = torch.zeros(b_size, self.rnn_dims).cuda()
-            h2 = torch.zeros(b_size, self.rnn_dims).cuda()
-            
-            mels = torch.FloatTensor(mels).cuda()
+        with torch.no_grad():
+            if use_cuda:
+                x = torch.zeros(b_size, 1).cuda()
+                h1 = torch.zeros(b_size, self.rnn_dims).cuda()
+                h2 = torch.zeros(b_size, self.rnn_dims).cuda()
+                
+                mels = torch.FloatTensor(mels).cuda()
+            else:
+                x = torch.zeros(b_size, 1)
+                h1 = torch.zeros(b_size, self.rnn_dims)
+                h2 = torch.zeros(b_size, self.rnn_dims)
+                
+                mels = torch.FloatTensor(mels)
             mels, aux = self.upsample(mels)
             
             aux_idx = [self.aux_dims * i for i in range(5)]

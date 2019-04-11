@@ -12,10 +12,10 @@ import lws
 
 
 def load_wav(path):
-    wav = librosa.load(path, sr=hparams.sample_rate)[0]
+    wav, sr = librosa.load(path, sr=hparams.sample_rate)
     # if hparams.trim:
     #     wav = librosa.effects.trim(wav, top_db=hparams.trim_thresh)[0]
-    return wav
+    return wav, sr
 
 def save_wav(wav, path):
     wav = wav * 32767 / max(0.01, np.max(np.abs(wav)))
