@@ -31,7 +31,8 @@ def get_wav_mel(path):
 
     """
     wav, fs = load_wav(path)
-    mel = melspectrogram(wav)
+    S = librosa.feature.melspectrogram(y=wav, sr=hp.sample_rate, hop_length=hp.hop_size, n_fft=hp.fft_size)
+    mel = librosa.power_to_db(S, ref=np.max)
     if hp.input_type == 'raw':
         return wav.astype(np.float32), mel
     elif hp.input_type == 'mulaw':

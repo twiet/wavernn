@@ -22,41 +22,41 @@ def save_wav(wav, path):
     wavfile.write(path, hparams.sample_rate, wav.astype(np.int16))
 
 
-def preemphasis(x):
-    from nnmnkwii.preprocessing import preemphasis
-    return preemphasis(x, hparams.preemphasis)
+# def preemphasis(x):
+#     from nnmnkwii.preprocessing import preemphasis
+#     return preemphasis(x, hparams.preemphasis)
 
 
-def inv_preemphasis(x):
-    from nnmnkwii.preprocessing import inv_preemphasis
-    return inv_preemphasis(x, hparams.preemphasis)
+# def inv_preemphasis(x):
+#     from nnmnkwii.preprocessing import inv_preemphasis
+#     return inv_preemphasis(x, hparams.preemphasis)
 
 
-def spectrogram(y):
-    D = _lws_processor().stft(preemphasis(y)).T
-    S = _amp_to_db(np.abs(D)) - hparams.ref_level_db
-    return _normalize(S)
+# def spectrogram(y):
+#     D = _lws_processor().stft(preemphasis(y)).T
+#     S = _amp_to_db(np.abs(D)) - hparams.ref_level_db
+#     return _normalize(S)
 
 
-def inv_spectrogram(spectrogram):
-    '''Converts spectrogram to waveform using librosa'''
-    S = _db_to_amp(_denormalize(spectrogram) + hparams.ref_level_db)  # Convert back to linear
-    processor = _lws_processor()
-    D = processor.run_lws(S.astype(np.float64).T ** hparams.power)
-    y = processor.istft(D).astype(np.float32)
-    return inv_preemphasis(y)
+# def inv_spectrogram(spectrogram):
+#     '''Converts spectrogram to waveform using librosa'''
+#     S = _db_to_amp(_denormalize(spectrogram) + hparams.ref_level_db)  # Convert back to linear
+#     processor = _lws_processor()
+#     D = processor.run_lws(S.astype(np.float64).T ** hparams.power)
+#     y = processor.istft(D).astype(np.float32)
+#     return inv_preemphasis(y)
 
 
-def melspectrogram(y):
-    D = _lws_processor().stft(preemphasis(y)).T
-    S = _amp_to_db(_linear_to_mel(np.abs(D))) - hparams.ref_level_db
-    if not hparams.allow_clipping_in_normalization:
-        assert S.max() <= 0 and S.min() - hparams.min_level_db >= 0
-    return _normalize(S)
+# def melspectrogram(y):
+#     D = _lws_processor().stft(preemphasis(y)).T
+#     S = _amp_to_db(_linear_to_mel(np.abs(D))) - hparams.ref_level_db
+#     if not hparams.allow_clipping_in_normalization:
+#         assert S.max() <= 0 and S.min() - hparams.min_level_db >= 0
+#     return _normalize(S)
 
 
-def _lws_processor():
-    return lws.lws(hparams.fft_size, hparams.hop_size, mode="speech")
+# def _lws_processor():
+#     return lws.lws(hparams.fft_size, hparams.hop_size, mode="audio")
 
 
 # Conversions:

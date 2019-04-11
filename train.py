@@ -1,10 +1,9 @@
 """Training WaveRNN Model.
 
-usage: train.py [options] <data-root>
+usage: train.py [options]
 
 options:
     --checkpoint-dir=<dir>      Directory where to save model checkpoints [default: checkpoints].
-    --checkpoint=<path>         Restore model from checkpoint path if given.
     -h, --help                  Show this help message and exit
 """
 from docopt import docopt
@@ -16,8 +15,6 @@ from tqdm import tqdm
 import numpy as np
 import matplotlib.pyplot as plt
 import librosa
-
-from model import build_model
 
 import torch
 from torch import nn
@@ -180,13 +177,12 @@ def train_loop(device, model, data_loader, optimizer, checkpoint_dir):
         global_epoch += 1
 
 
-
 if __name__=="__main__":
     args = docopt(__doc__)
     #print("Command line args:\n", args)
     checkpoint_dir = args["--checkpoint-dir"]
-    checkpoint_path = args["--checkpoint"]
-    data_root = args["<data-root>"]
+    checkpoint_path = hp.load_checkpoint
+    data_root = hp.data_dir
 
     # make dirs, load dataloader and set up device
     os.makedirs(checkpoint_dir, exist_ok=True)
