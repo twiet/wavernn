@@ -1,6 +1,8 @@
 class hparams:
-    load_checkpoint = None # "./checkpoints/10_bit_checkpoint_step000200000.pth"
-    dataset = "./nsynth-test/audio"
+    musdb18_path = "./musdb18/"
+    output_dir = "./output_dir"
+    load_checkpoint = "./checkpoints/10_bit_checkpoint_step000200000.pth"
+    dataset = "./musdb18/sliced/"
     data_dir = "./data_dir/"
     test_split = 4
     # option parameters
@@ -61,7 +63,7 @@ class hparams:
     # training parameters
     batch_size = 32
     #nepochs = 5000
-    nepochs = 100000
+    nepochs = 200000
     save_every_step = 5000
     evaluate_every_step = 5000
     # seq_len_factor can be adjusted to increase training sequence length (will increase GPU usage)
@@ -69,7 +71,7 @@ class hparams:
     seq_len = seq_len_factor * hop_size
     grad_norm = 10
     #learning rate parameters
-    initial_learning_rate=5e-4
+    initial_learning_rate=1e-6
     lr_schedule_type = 'step' # or 'noam'
     # for noam learning rate schedule
     noam_warm_up_steps = 2000 * (batch_size // 16)
@@ -82,6 +84,6 @@ class hparams:
     adam_eps=1e-8
     amsgrad=False
     weight_decay = 0.0
-    #fix_learning_rate = 5e-6 # modify if one wants to use a fixed learning rate, else set to None to use noam learning rate
+    # fix_learning_rate = 5e-6 # modify if one wants to use a fixed learning rate, else set to None to use noam learning rate
     fix_learning_rate = None
     #-----------------

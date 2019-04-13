@@ -8,11 +8,10 @@ from hparams import hparams as hp
 from utils import mulaw_quantize, inv_mulaw_quantize
 import pickle
 
-
 class AudiobookDataset(Dataset):
     def __init__(self, data_path):
         self.path = os.path.join(data_path, "")
-        with open(os.path.join(self.path,'dataset_ids.pkl'), 'rb') as f:
+        with open(os.path.join(self.path,'training_set_ids.pkl'), 'rb') as f:
             self.metadata = pickle.load(f)
         self.mel_path = os.path.join(data_path, "mel")
         self.wav_path = os.path.join(data_path, "wav")
@@ -20,8 +19,8 @@ class AudiobookDataset(Dataset):
         
     def __getitem__(self, index):
         file = self.metadata[index]
-        m = np.load(os.path.join(self.mel_path,'{}.npy'.format(file)))
-        x = np.load(os.path.join(self.wav_path,'{}.npy'.format(file)))
+        m = np.load(os.path.join(self.mel_path,'{}_mel.npy'.format(file)))
+        x = np.load(os.path.join(self.wav_path,'{}_wav.npy'.format(file)))
         return m, x
 
     def __len__(self):

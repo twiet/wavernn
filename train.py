@@ -8,7 +8,7 @@ options:
 """
 from docopt import docopt
 
-import os
+import os, pickle
 from os.path import dirname, join, expanduser
 from tqdm import tqdm
 
@@ -29,11 +29,32 @@ from dataset import raw_collate, discrete_collate, AudiobookDataset
 from hparams import hparams as hp
 from lrschedule import noam_learning_rate_decay, step_learning_rate_decay
 
+from preprocess import get_wav_mel
+
+import matplotlib
+matplotlib.use('Agg')
+
 global_step = 0
 global_epoch = 0
 global_test_step = 0
 use_cuda = torch.cuda.is_available()
-#use_cuda = False
+
+def save_spectrogram_comparision(save_path, mel_gen, mel_true):
+    plt.figure(figsize=(10, 10))
+    plt.subplot(2,1,1)
+    librosa.display.specshow(mel_true, y_axis='mel', fmax=8000, x_axis='time')
+    plt.colorbar(format='%+2.0f dB')
+    plt.title('Mel spectrogram (true)')
+    plt.tight_layout()
+
+    plt.subplot(2,1,2)
+    librosa.display.specshow(mel_gen, y_axis='mel', fmax=8000, x_axis='time')
+    plt.colorbar(format='%+2.0f dB')
+    plt.title('Mel spectrogram (gen)')
+    plt.tight_layout()
+
+    plt.savefig(save_path)
+    plt.close()
 
 def save_checkpoint(device, model, optimizer, step, checkpoint_dir, epoch):
     checkpoint_path = join(
@@ -72,12 +93,11 @@ def load_checkpoint(path, model, optimizer, reset_optimizer):
         if optimizer_state is not None:
             print("Load optimizer state from {}".format(path))
             optimizer.load_state_dict(checkpoint["optimizer"])
-    global_step = checkpoint["global_step"]
-    global_epoch = checkpoint["global_epoch"]
-    global_test_step = checkpoint.get("global_test_step", 0)
+    # global_step = checkpoint["global_step"]
+    # global_epoch = checkpoint["global_epoch"]
+    # global_test_step = checkpoint.get("global_test_step", 0)
 
     return model
-
 
 def test_save_checkpoint():
     checkpoint_path = "checkpoints/"
@@ -89,33 +109,31 @@ def test_save_checkpoint():
 
     model = load_checkpoint(checkpoint_path+"checkpoint_step000000000.pth", model, optimizer, False)
 
-
 def evaluate_model(model, data_loader, checkpoint_dir, limit_eval_to=5):
     """evaluate model and save generated wav and plot
 
     """
     test_path = data_loader.dataset.test_path
-    test_files = os.listdir(test_path)
+    with open(os.path.join(data_loader.dataset.path, 'test_set_ids.pkl'), 'rb') as f:
+        test_files = pickle.load(f)
     counter = 0
     output_dir = os.path.join(checkpoint_dir,'eval')
-    for f in test_files:
-        if f[-7:] == "mel.npy":
-            mel = np.load(os.path.join(test_path,f))
-            wav = model.generate(mel)
-            # save wav
-            wav_path = os.path.join(output_dir,"checkpoint_step{:09d}_wav_{}.wav".format(global_step,counter))
-            librosa.output.write_wav(wav_path, wav, sr=hp.sample_rate)
-            # save wav plot
-            fig_path = os.path.join(output_dir,"checkpoint_step{:09d}_wav_{}.png".format(global_step,counter))
-            fig = plt.plot(wav.reshape(-1))
-            plt.savefig(fig_path)
-            # clear fig to drawing to the same plot
-            plt.clf()
-            counter += 1
+    for file_id in test_files:
+        f = f"{file_id}_mel.npy"
+        mel_true = np.load(os.path.join(test_path, f))
+        wav = model.generate(mel_true)
+        # save wav
+        wav_path = os.path.join(output_dir,"checkpoint_step{:09d}_wav_{}.wav".format(global_step, counter))
+        librosa.output.write_wav(wav_path, wav, sr=hp.sample_rate)
+        # save wav plot
+        fig_path = os.path.join(output_dir,"checkpoint_step{:09d}_wav_{}.png".format(global_step, counter))
+        
+        wav, mel_gen = get_wav_mel(wav)
+        save_spectrogram_comparision(fig_path, mel_gen, mel_true)
+        counter += 1
         # stop evaluation early via limit_eval_to
         if counter >= limit_eval_to:
             break
-
 
 def train_loop(device, model, data_loader, optimizer, checkpoint_dir):
     """Main training loop.
@@ -153,10 +171,10 @@ def train_loop(device, model, data_loader, optimizer, checkpoint_dir):
                 param_group['lr'] = current_lr
             optimizer.zero_grad()
             loss.backward()
+
             # clip gradient norm
             nn.utils.clip_grad_norm_(model.parameters(), hp.grad_norm)
             optimizer.step()
-
             running_loss += loss.item()
             avg_loss = running_loss / (i+1)
             # saving checkpoint if needed
@@ -167,7 +185,6 @@ def train_loop(device, model, data_loader, optimizer, checkpoint_dir):
                 print("step {}, evaluating model: generating wav from mel...".format(global_step))
                 evaluate_model(model, data_loader, checkpoint_dir)
                 print("evaluation finished, resuming training...")
-
             # reset global_test_step status after evaluation
             if global_test_step is True:
                 global_test_step = False
@@ -222,7 +239,7 @@ if __name__=="__main__":
         model = load_checkpoint(checkpoint_path, model, optimizer, False)
         print("loading model from checkpoint:{}".format(checkpoint_path))
         # set global_test_step to True so we don't evaluate right when we load in the model
-        global_test_step = True
+        # global_test_step = True
 
     # main train loop
     try:
@@ -233,25 +250,6 @@ if __name__=="__main__":
     finally:
         print("saving model....")
         save_checkpoint(device, model, optimizer, global_step, checkpoint_dir, global_epoch)
-    
-
-def test_eval():
-    data_root = "data_dir"
-    dataset = AudiobookDataset(data_root)
-    if hp.input_type == 'raw':
-        collate_fn = raw_collate
-    elif hp.input_type == 'bits':
-        collate_fn = discrete_collate
-    else:
-        raise ValueError("input_type:{} not supported".format(hp.input_type))
-    data_loader = DataLoader(dataset, collate_fn=collate_fn, shuffle=True, num_workers=0, batch_size=hp.batch_size)
-    device = torch.device("cuda" if use_cuda else "cpu")
-    print("using device:{}".format(device))
-
-    # build model, create optimizer
-    model = build_model().to(device)
-
-    evaluate_model(model, data_loader)
 
     
 
