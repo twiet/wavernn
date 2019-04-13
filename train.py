@@ -99,16 +99,6 @@ def load_checkpoint(path, model, optimizer, reset_optimizer):
 
     return model
 
-def test_save_checkpoint():
-    checkpoint_path = "checkpoints/"
-    device = torch.device("cuda" if use_cuda else "cpu")
-    model = build_model()
-    optimizer = optim.Adam(model.parameters(), lr=1e-4)
-    global global_step, global_epoch, global_test_step
-    save_checkpoint(device, model, optimizer, global_step, checkpoint_path, global_epoch)
-
-    model = load_checkpoint(checkpoint_path+"checkpoint_step000000000.pth", model, optimizer, False)
-
 def evaluate_model(model, data_loader, checkpoint_dir, limit_eval_to=5):
     """evaluate model and save generated wav and plot
 
@@ -123,10 +113,10 @@ def evaluate_model(model, data_loader, checkpoint_dir, limit_eval_to=5):
         mel_true = np.load(os.path.join(test_path, f))
         wav = model.generate(mel_true)
         # save wav
-        wav_path = os.path.join(output_dir,"checkpoint_step{:09d}_wav_{}.wav".format(global_step, counter))
+        wav_path = os.path.join(output_dir,"checkpoint_{:09d}_{}_{}.wav".format(global_step, file_id, counter))
         librosa.output.write_wav(wav_path, wav, sr=hp.sample_rate)
         # save wav plot
-        fig_path = os.path.join(output_dir,"checkpoint_step{:09d}_wav_{}.png".format(global_step, counter))
+        fig_path = os.path.join(output_dir,"checkpoint_{:09d}_{}_{}.png".format(global_step, file_id, counter))
         
         wav, mel_gen = get_wav_mel(wav)
         save_spectrogram_comparision(fig_path, mel_gen, mel_true)

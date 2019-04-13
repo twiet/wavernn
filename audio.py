@@ -102,12 +102,3 @@ def quantize(x):
     quant = (x + 1.) * (2**hparams.bits - 1) / 2
     return quant.astype(np.int)
 
-
-# testing
-def test_everything():
-    wav = np.random.randn(12000,)
-    mel = melspectrogram(wav)
-    spec = spectrogram(wav)
-    quant = quantize(wav)
-    print(wav.shape, mel.shape, spec.shape, quant.shape)
-    print(quant.max(), quant.min(), mel.max(), mel.min(), spec.max(), spec.min())

@@ -1,8 +1,8 @@
 class hparams:
     musdb18_path = "./musdb18/"
     output_dir = "./output_dir"
-    load_checkpoint = "./checkpoints/10_bit_checkpoint_step000200000.pth"
-    dataset = "./musdb18/sliced/"
+    load_checkpoint = None # "./checkpoints/vt_checkpoint_step000040000.pth"
+    dataset = "./musdb18/sliced"
     data_dir = "./data_dir/"
     test_split = 4
     # option parameters
@@ -30,7 +30,7 @@ class hparams:
     # audio processing parameters
     num_mels = 80
     fmin = 125
-    fmax = 7600
+    fmax = 12600
     fft_size = 1024
     hop_size = 256
     win_length = 1024
@@ -71,7 +71,7 @@ class hparams:
     seq_len = seq_len_factor * hop_size
     grad_norm = 10
     #learning rate parameters
-    initial_learning_rate=1e-6
+    initial_learning_rate=5e-4
     lr_schedule_type = 'step' # or 'noam'
     # for noam learning rate schedule
     noam_warm_up_steps = 2000 * (batch_size // 16)
