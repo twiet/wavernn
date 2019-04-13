@@ -7,7 +7,10 @@ def slice_wav(wav, duration=10, max_slices=5):
     window = hp.sample_rate * duration
     stride = int(window * 0.8)
     slices = get_wav_slices(wav, window, stride)
-    return random.sample([wav[j:k] for j,k in slices if sum(wav[j:k]) != 0], max_slices)
+    out = [wav[j:k] for j,k in slices if sum(wav[j:k]) != 0]
+    if len(out) > max_slices:
+        return out
+    return random.sample(out, max_slices)
 
 if __name__=="__main__":
     wav_dir = hp.dataset
@@ -18,7 +21,7 @@ if __name__=="__main__":
         sliced_dir = os.path.join(hp.musdb18_path, "sliced")
         os.makedirs(sliced_dir, exist_ok=True)
 
-        samples = 2
+        samples = 30
         mus = musdb.DB(root_dir=hp.musdb18_path)
         tracks = random.sample(mus.load_mus_tracks(subsets=['test']), samples)
         for track in tqdm(tracks):
