@@ -49,12 +49,12 @@ def preprocess(wav_files, wav_dir, mel_path, wav_path, mode = "train"):
         file_path = os.path.join(wav_dir, wav_file)
         wav, _ = load_wav(file_path)
         wav, mel = get_wav_mel(wav)
-        file_id = f"{wav_file[:-4]}"
-        save_spectrogram(os.path.join(mel_path, f"{file_id}.jpg"), mel)
-        save_wav(wav, os.path.join(wav_path, f"{file_id}.wav"))
+        file_id = wav_file[:-4]
+        save_spectrogram(os.path.join(mel_path, file_id + ".jpg"), mel)
+        save_wav(wav, os.path.join(wav_path, file_id + ".wav"))
 
-        np.save(os.path.join(mel_path, f"{file_id}_mel.npy"), mel)
-        np.save(os.path.join(wav_path, f"{file_id}_wav.npy"), wav)
+        np.save(os.path.join(mel_path, file_id + "_mel.npy"), mel)
+        np.save(os.path.join(wav_path, file_id + "_wav.npy"), wav)
         dataset_ids.append(file_id)
     return dataset_ids
 

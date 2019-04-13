@@ -42,6 +42,6 @@ if __name__=="__main__":
 
             wav_slices = slice_wav(vox_wav)
             for i, wav in enumerate(wav_slices):
-                path = os.path.join(sliced_dir, f"{track.name}_{i:03d}_vox.wav")
+                path = os.path.join(sliced_dir, "{}_{03d}_vox.wav".format(track.name, i))
                 save_wav(wav, path)
                 

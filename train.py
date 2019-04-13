@@ -119,7 +119,7 @@ def evaluate_model(model, data_loader, checkpoint_dir, limit_eval_to=5):
     counter = 0
     output_dir = os.path.join(checkpoint_dir,'eval')
     for file_id in test_files:
-        f = f"{file_id}_mel.npy"
+        f = file_id + "_mel.npy"
         mel_true = np.load(os.path.join(test_path, f))
         wav = model.generate(mel_true)
         # save wav
