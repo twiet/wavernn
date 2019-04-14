@@ -63,6 +63,9 @@ def discrete_collate(batch) :
     
     pad = 2
     mel_win = hp.seq_len // hp.hop_size + 2 * pad
+    invalid_batches = [i for i, x in enumerate(batch) if x[0].shape[-1] - (mel_win + 2 * pad) <= 0]
+    for i in invalid_batches:
+        del batch[i]
     max_offsets = [x[0].shape[-1] - (mel_win + 2 * pad) for x in batch]
     mel_offsets = [np.random.randint(0, offset) for offset in max_offsets]
     sig_offsets = [(offset + pad) * hp.hop_size for offset in mel_offsets]

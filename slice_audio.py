@@ -8,7 +8,7 @@ def slice_wav(wav, duration=10, max_slices=50):
     stride = int(window * 0.8)
     slices = get_wav_slices(wav, window, stride)
     out = [wav[j:k] for j,k in slices if sum(wav[j:k]) != 0]
-    if len(out) > max_slices:
+    if len(out) < max_slices:
         return out
     return random.sample(out, max_slices)
 
@@ -23,6 +23,8 @@ if __name__=="__main__":
         samples = 150
         mus = musdb.DB(root_dir=hp.musdb18_path)
         tracks = mus.load_mus_tracks()
+        if len(tracks) < samples:
+            samples = len(tracks)
         tracks = random.sample(tracks, samples)
         for track in tqdm(tracks):
             mixture = track.audio

@@ -30,7 +30,7 @@ class hparams:
     # audio processing parameters
     num_mels = 80
     fmin = 125
-    fmax = 12600
+    fmax = 8000
     fft_size = 1024
     hop_size = 256
     win_length = 1024
